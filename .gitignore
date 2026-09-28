@@ -1,0 +1,13 @@
+@"
+# Скомпилированные бинарники
+simple-library
+simple-library.exe
+
+# Временные файлы Go
+*.test
+*.out
+
+# IDE
+.idea/
+.vscode/
+"@ | Out-File -Encoding utf8 .gitignore
