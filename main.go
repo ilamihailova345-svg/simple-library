@@ -49,7 +49,7 @@ func main() {
     fmt.Println("Книг в библиотеке:", len(myLibrary.Books))
     fmt.Println("Читателей:", len(myLibrary.Readers))
 
-    // Система уведомлений 
+    // --- Система уведомлений ---
     emailNotifier := models.EmailNotifier{EmailAddress: "student@example.com"}
     smsNotifier := models.SMSNotifier{PhoneNumber: "+79991234567"}
 
@@ -75,4 +75,7 @@ func main() {
     if err != nil {
         fmt.Println("Ожидаемая ошибка:", err)
     }
+
+    fmt.Println("__ Все книги в библиотеке __")
+    myLibrary.ListAllBooks()
 }
