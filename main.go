@@ -48,4 +48,14 @@ func main() {
     }
     fmt.Println("Книг в библиотеке:", len(lib.Books))
     fmt.Println("Читателей:", len(lib.Readers))
+
+    // --- Система уведомлений ---
+    emailNotifier := models.EmailNotifier{EmailAddress: "student@example.com"}
+    smsNotifier := models.SMSNotifier{PhoneNumber: "+79991234567"}
+
+    notifiers := []models.Notifier{emailNotifier, smsNotifier}
+
+    for _, n := range notifiers {
+        n.Notify("Ваша книга просрочена!")
+    }
 }
