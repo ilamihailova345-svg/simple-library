@@ -3,6 +3,7 @@ package models
 import "fmt"
 
 type Book struct {
+	ID       int
 	Title    string
 	Author   string
 	Year     int
@@ -20,32 +21,29 @@ func (b Book) String() string {
 }
 
 // выдаёт книгу читателю
-func (b *Book) IssueBook(reader *Reader) {
+func (b *Book) IssueBook(reader *Reader) error {
 	if b.IsIssued {
-		fmt.Printf("Книга %s уже кому-то выдана\n", b.Title)
-		return
+		return fmt.Errorf("книга '%s' уже кому-то выдана", b.Title)
 	}
 	if !reader.IsActive {
-		fmt.Printf("Читатель %s %s не активен и не может получить книгу.\n",
+		return fmt.Errorf("читатель %s %s не активен и не может получить книгу",
 			reader.FirstName, reader.LastName)
-		return
 	}
 	b.IsIssued = true
 	b.ReaderID = &reader.ID
-	fmt.Printf("Книга %s была выдана читателю %s %s\n",
-		b.Title, reader.FirstName, reader.LastName)
+	return nil
 }
 
 // возвращает книгу в библиотеку
-func (b *Book) ReturnBook() {
+func (b *Book) ReturnBook() error {
 	if !b.IsIssued {
-		fmt.Printf("Книга %s и так в библиотеке\n", b.Title)
-		return
+		return fmt.Errorf("книга '%s' и так в библиотеке", b.Title)
 	}
 	b.IsIssued = false
 	b.ReaderID = nil
-	fmt.Printf("Книга %s возвращена в библиотеку\n", b.Title)
+	return nil
 }
+
 
 type Reader struct {
 	ID        int
@@ -78,30 +76,33 @@ func (r *Reader) Activate() {
 	r.IsActive = true
 }
 
+
 type Library struct {
 	Books   map[int]*Book
 	Readers map[int]*Reader
 }
 
-// ищет книгу по ID
+// ищет книгу по ID 
 func (lib *Library) FindBookByID(id int) (*Book, error) {
-	book, ok := lib.Books[id]
-	if !ok {
-		return nil, fmt.Errorf("книга с ID %d не найдена", id)
+	for _, book := range lib.Books {
+		if book.ID == id {
+			return book, nil
+		}
 	}
-	return book, nil
+	return nil, fmt.Errorf("Книга с этим id %d не найдена в библиотеке!", id)
 }
 
 // ищет читателя по ID
 func (lib *Library) FindReaderByID(id int) (*Reader, error) {
-	reader, ok := lib.Readers[id]
-	if !ok {
-		return nil, fmt.Errorf("читатель с ID %d не найден", id)
+	for _, reader := range lib.Readers {
+		if reader.ID == id {
+			return reader, nil
+		}
 	}
-	return reader, nil
+	return nil, fmt.Errorf("Читатель с этим id %d не найден в библиотеке!", id)
 }
 
-//  выдаёт книгу читателю по их ID
+// выдаёт книгу читателю по их ID
 func (lib *Library) IssueBookToReader(bookID int, readerID int) error {
 	book, err := lib.FindBookByID(bookID)
 	if err != nil {
@@ -113,7 +114,24 @@ func (lib *Library) IssueBookToReader(bookID int, readerID int) error {
 		return err
 	}
 
-	book.IssueBook(reader)
+	if err := book.IssueBook(reader); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// возвращает книгу в библиотеку по её ID
+func (lib *Library) ReturnBook(bookID int) error {
+	book, err := lib.FindBookByID(bookID)
+	if err != nil {
+		return err
+	}
+
+	if err := book.ReturnBook(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
