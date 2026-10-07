@@ -7,9 +7,11 @@ import (
 )
 
 func main() {
+	fmt.Println("Проект 'Простая библиотека' запущен.")
 
 
-	fmt.Println("\n Test1 - config")
+	fmt.Println("\n__ Тест config __")
+
 	configWithPort := map[string]string{
 		"PORT": "8080",
 		"HOST": "localhost",
@@ -33,119 +35,91 @@ func main() {
 	}
 
 
-
 	fmt.Println("\n__ Библиотека __")
-	fmt.Println("Проект запущен.")
+	myLibrary := models.New()
 
-	book1 := models.Book{
-		ID:     1,
-		Title:  "Преступление и наказание",
-		Author: "Достоевский",
-		Year:   1866,
+	book1, err := myLibrary.AddBook("Преступление и наказание", "Достоевский", 1866)
+	if err != nil {
+		fmt.Println("Ошибка добавления книги:", err)
+		return
 	}
 
-	user1 := models.Reader{
-		ID:        1,
-		FirstName: "Шлепок",
-		LastName:  "Обувние",
-		IsActive:  true,
-	}
-	reader2 := models.Reader{
-		ID:        2,
-		FirstName: "Akaki",
-		LastName:  "Kakievich",
-		IsActive:  true,
+	book2, err := myLibrary.AddBook("Война и мир", "Толстой", 1869)
+	if err != nil {
+		fmt.Println("Ошибка добавления книги:", err)
+		return
 	}
 
-
-	// выдаём книгу user1
-	if err := book1.IssueBook(&user1); err != nil {
-		fmt.Println("Ошибка выдачи:", err)
-	} else {
-		fmt.Println("Книга выдана:", book1)
+	_, err = myLibrary.AddBook("Преступление и наказание", "Достоевский", 1866)
+	if err != nil {
+		fmt.Println("Ожидаемая ошибка при добавлении дубликата:", err)
 	}
 
-	// ОШИБКА: выдать ту же книгу reader2
-	if err := book1.IssueBook(&reader2); err != nil {
-		fmt.Println("Ожидаемая ошибка:", err)
-	}
+	user1 := myLibrary.AddReader("Шлепок", "Петров")
+	user2 := myLibrary.AddReader("Газан", "Иванов")
 
-
-
-	user1.Deactivate()
-	fmt.Println(" Test2 - user1")
-
-	// возврат книги
-	if err := book1.ReturnBook(); err != nil {
-		fmt.Println("Ошибка возврата:", err)
-	} else {
-		fmt.Println("Книга возвращена:", book1)
-	}
-
-	// ОШИБКА: повторный возврат
-	if err := book1.ReturnBook(); err != nil {
-		fmt.Println("Ожидаемая ошибка:", err)
-	}
-
-	myLibrary := models.Library{
-		Books:   map[int]*models.Book{1: &book1},
-		Readers: map[int]*models.Reader{1: &user1},
-	}
 	fmt.Println("Книг в библиотеке:", len(myLibrary.Books))
 	fmt.Println("Читателей:", len(myLibrary.Readers))
 
 
 
-	fmt.Println(" __ Система уведомлений __")
-	emailNotifier := models.EmailNotifier{EmailAddress: "student@example.com"}
-	smsNotifier := models.SMSNotifier{PhoneNumber: "+79991234567"}
+	fmt.Println("\n1. Успешная выдача книги")
 
-	notifiers := []models.Notifier{emailNotifier, smsNotifier}
-	for _, n := range notifiers {
-		n.Notify("Ваша книга просрочена!")
-	}
-
-
-
-	fmt.Println("\n__ Test3 - выдача книг __")
-
-	user1.Activate()
-
-	if err := myLibrary.IssueBookToReader(1, 1); err != nil {
+	err = myLibrary.IssueBookToReader(book1.ID, user1.ID)
+	if err != nil {
 		fmt.Println("Ошибка выдачи:", err)
 	} else {
-		fmt.Println("Книга успешно выдана читателю.")
+		fmt.Println("Книга успешно выдана.")
 	}
+	fmt.Println("Статус книги:", book1)
 
-	book, _ := myLibrary.FindBookByID(1)
-	if book != nil {
-		fmt.Println("Статус книги после выдачи:", book)
-	}
+	
+	fmt.Println("\n2. Попытка выдать уже выданную книгу")
 
-	if err := myLibrary.IssueBookToReader(99, 1); err != nil {
+	err = myLibrary.IssueBookToReader(book1.ID, user2.ID)
+	if err != nil {
 		fmt.Println("Ожидаемая ошибка:", err)
+	} else {
+		fmt.Println("Книга выдана повторно (не должно быть)")
 	}
 
-	
-	
-	fmt.Println("\n__ Тестируем возврат книги через Library.ReturnBook __")
 
-	if err := myLibrary.ReturnBook(1); err != nil {
+
+	fmt.Println("\n3. Попытка выдать книгу несуществующему читателю")
+
+	err = myLibrary.IssueBookToReader(book2.ID, 999)
+	if err != nil {
+		fmt.Println("Ожидаемая ошибка:", err)
+	} else {
+		fmt.Println("Книга выдана несуществующему читателю (не должно быть)")
+	}
+
+
+
+	fmt.Println("\n4. Успешный возврат книги")
+
+	err = myLibrary.ReturnBook(book1.ID)
+	if err != nil {
 		fmt.Println("Ошибка возврата:", err)
 	} else {
-		fmt.Println("Книга успешно возвращена через библиотеку.")
+		fmt.Println("Книга успешно возвращена.")
 	}
+	fmt.Println("Статус книги:", book1)
 
-	book, _ = myLibrary.FindBookByID(1)
-	if book != nil {
-		fmt.Println("Статус книги после возврата:", book)
-	}
 
-	// ОШИБКА: повторный возврат - "книга и так в библиотеке"
-	if err := myLibrary.ReturnBook(1); err != nil {
+
+	fmt.Println("\n5. Попытка вернуть книгу, которая уже в библиотеке")
+
+	err = myLibrary.ReturnBook(book1.ID)
+	if err != nil {
 		fmt.Println("Ожидаемая ошибка:", err)
+	} else {
+		fmt.Println("Книга возвращена повторно (не должно быть)")
 	}
 
 	fmt.Println("\n__ Все книги в библиотеке __")
-	myLibrary.ListAllBooks()
+
+	for _, b := range myLibrary.ListAllBooks() {
+		fmt.Println(b)
+	}
 }
