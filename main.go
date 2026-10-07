@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"library-app/domain"
+	"library-app/config"
 	"library-app/library"
 	"library-app/notifications"
 )
@@ -16,14 +16,14 @@ func main() {
 	configWithPort := map[string]string{"PORT": "8080", "HOST": "localhost"}
 	configWithoutPort := map[string]string{"HOST": "localhost"}
 
-	port, err := GetPortFromConfig(configWithPort)
+	port, err := config.GetPortFromConfig(configWithPort)
 	if err != nil {
 		fmt.Println("Ошибка:", err)
 	} else {
 		fmt.Println("Порт найден:", port)
 	}
 
-	port, err = GetPortFromConfig(configWithoutPort)
+	port, err = config.GetPortFromConfig(configWithoutPort)
 	if err != nil {
 		fmt.Println("Ошибка:", err)
 	} else {
@@ -46,7 +46,6 @@ func main() {
 		return
 	}
 
-	// Дубликат — ожидаем ошибку
 	_, err = myLibrary.AddBook("Преступление и наказание", "Достоевский", 1866)
 	if err != nil {
 		fmt.Println("Ожидаемая ошибка при добавлении дубликата:", err)
@@ -58,7 +57,6 @@ func main() {
 	fmt.Println("Книг:", len(myLibrary.Books), "Читателей:", len(myLibrary.Readers))
 
 
-
 	fmt.Println("\n1. Успешная выдача книги")
 	err = myLibrary.IssueBookToReader(book1.ID, user1.ID)
 	if err != nil {
@@ -68,25 +66,19 @@ func main() {
 	}
 	fmt.Println("Статус книги:", book1)
 
-
 	fmt.Println("\n2. Попытка выдать уже выданную книгу")
 	err = myLibrary.IssueBookToReader(book1.ID, user2.ID)
 	if err != nil {
 		fmt.Println("Ожидаемая ошибка:", err)
-	} else {
-		fmt.Println("Книга выдана повторно (не должно быть)")
 	}
-
 
 	fmt.Println("\n3. Попытка выдать книгу несуществующему читателю")
 	err = myLibrary.IssueBookToReader(book2.ID, 999)
 	if err != nil {
 		fmt.Println("Ожидаемая ошибка:", err)
-	} else {
-		fmt.Println("Книга выдана несуществующему читателю (не должно быть)")
 	}
 
-
+	// === Сценарий 4 ===
 	fmt.Println("\n4. Успешный возврат книги")
 	err = myLibrary.ReturnBook(book1.ID)
 	if err != nil {
@@ -96,13 +88,10 @@ func main() {
 	}
 	fmt.Println("Статус книги:", book1)
 
-
 	fmt.Println("\n5. Попытка вернуть книгу, которая уже в библиотеке")
 	err = myLibrary.ReturnBook(book1.ID)
 	if err != nil {
 		fmt.Println("Ожидаемая ошибка:", err)
-	} else {
-		fmt.Println("Книга возвращена повторно (не должно быть)")
 	}
 
 	fmt.Println("\n__ Уведомления __")
@@ -118,6 +107,4 @@ func main() {
 	for _, b := range myLibrary.GetAllBooks() {
 		fmt.Println(b)
 	}
-
-	_ = domain.Book{}
 }
