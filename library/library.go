@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"library-app/domain"
+	"library-app/storage"
 )
 
 type Library struct {
@@ -13,7 +14,7 @@ type Library struct {
 	lastReaderID int
 }
 
-// создаёт новую пустую библиотеку
+// New создаёт новую пустую библиотеку.
 func New() *Library {
 	return &Library{
 		Books:   []*domain.Book{},
@@ -21,7 +22,7 @@ func New() *Library {
 	}
 }
 
-// добавляет книгу. Ошибка, если дубликат
+// добавляет книгу
 func (lib *Library) AddBook(title, author string, year int) (*domain.Book, error) {
 	for _, b := range lib.Books {
 		if b.Title == title && b.Author == author {
@@ -91,4 +92,27 @@ func (lib *Library) ReturnBook(bookID int) error {
 
 func (lib *Library) GetAllBooks() []*domain.Book {
 	return lib.Books
+}
+
+// сохраняет книги библиотеки в CSV
+func (lib *Library) SaveToCSV(filename string) error {
+	return storage.SaveBooksToCSV(lib.Books, filename)
+}
+
+// загружает книги из CSV, полностью заменяя текущий список
+func (lib *Library) LoadFromCSV(filename string) error {
+	books, err := storage.LoadBooksFromCSV(filename)
+	if err != nil {
+		return err
+	}
+	lib.Books = books
+
+	maxID := 0
+	for _, b := range books {
+		if b.ID > maxID {
+			maxID = b.ID
+		}
+	}
+	lib.lastBookID = maxID
+	return nil
 }

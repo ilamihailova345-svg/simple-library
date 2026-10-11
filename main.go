@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
+	"os"
 
-	"library-app/config"
 	"library-app/library"
 	"library-app/notifications"
 )
@@ -11,100 +11,75 @@ import (
 func main() {
 	fmt.Println("Проект 'Простая библиотека' запущен.")
 
-	fmt.Println("\n__ Тест config __")
-
-	configWithPort := map[string]string{"PORT": "8080", "HOST": "localhost"}
-	configWithoutPort := map[string]string{"HOST": "localhost"}
-
-	port, err := config.GetPortFromConfig(configWithPort)
-	if err != nil {
-		fmt.Println("Ошибка:", err)
-	} else {
-		fmt.Println("Порт найден:", port)
-	}
-
-	port, err = config.GetPortFromConfig(configWithoutPort)
-	if err != nil {
-		fmt.Println("Ошибка:", err)
-	} else {
-		fmt.Println("Порт найден:", port)
-	}
-
-	fmt.Println("\n__ Библиотека __")
-
 	myLibrary := library.New()
 
-	book1, err := myLibrary.AddBook("Преступление и наказание", "Достоевский", 1866)
+	_, err := myLibrary.AddBook("Преступление и наказание", "Достоевский", 1866)
 	if err != nil {
 		fmt.Println("Ошибка добавления книги:", err)
 		return
 	}
 
-	book2, err := myLibrary.AddBook("Война и мир", "Толстой", 1869)
+	_, err = myLibrary.AddBook("Война и мир", "Толстой", 1869)
 	if err != nil {
 		fmt.Println("Ошибка добавления книги:", err)
 		return
 	}
 
-	_, err = myLibrary.AddBook("Преступление и наказание", "Достоевский", 1866)
-	if err != nil {
-		fmt.Println("Ожидаемая ошибка при добавлении дубликата:", err)
+	user1 := myLibrary.AddReader("Колян", "Вованыч")
+	_ = user1
+
+	if len(os.Args) >= 3 {
+		command := os.Args[1]
+		filename := os.Args[2]
+
+		switch command {
+		case "save":
+			err := myLibrary.SaveToCSV(filename)
+			if err != nil {
+				fmt.Println("Ошибка сохранения:", err)
+				os.Exit(1)
+			}
+			fmt.Printf("Книги сохранены в %s\n", filename)
+			return
+
+		case "load":
+			err := myLibrary.LoadFromCSV(filename)
+			if err != nil {
+				fmt.Println("Ошибка загрузки:", err)
+				os.Exit(1)
+			}
+			fmt.Printf("Книги загружены из %s:\n", filename)
+			for _, b := range myLibrary.GetAllBooks() {
+				fmt.Println(b)
+			}
+			return
+
+		default:
+			fmt.Printf("Неизвестная команда: %s\n", command)
+			fmt.Println("Доступные команды:")
+			fmt.Println("  save <имя_файла.csv>")
+			fmt.Println("  load <имя_файла.csv>")
+			os.Exit(1)
+		}
 	}
 
-	user1 := myLibrary.AddReader("Шлепок", "Петров")
-	user2 := myLibrary.AddReader("Газан", "Иванов")
+	fmt.Println("\nДемо-режим. Доступные команды:")
+	fmt.Println("  go run . save books.csv")
+	fmt.Println("  go run . load books.csv")
+	fmt.Println()
 
-	fmt.Println("Книг:", len(myLibrary.Books), "Читателей:", len(myLibrary.Readers))
-
-
-	fmt.Println("\n1. Успешная выдача книги")
-	err = myLibrary.IssueBookToReader(book1.ID, user1.ID)
-	if err != nil {
-		fmt.Println("Ошибка выдачи:", err)
-	} else {
-		fmt.Println("Книга успешно выдана.")
+	fmt.Println("Книги в библиотеке:")
+	for _, b := range myLibrary.GetAllBooks() {
+		fmt.Println(b)
 	}
-	fmt.Println("Статус книги:", book1)
+	fmt.Println()
 
-	fmt.Println("\n2. Попытка выдать уже выданную книгу")
-	err = myLibrary.IssueBookToReader(book1.ID, user2.ID)
-	if err != nil {
-		fmt.Println("Ожидаемая ошибка:", err)
-	}
-
-	fmt.Println("\n3. Попытка выдать книгу несуществующему читателю")
-	err = myLibrary.IssueBookToReader(book2.ID, 999)
-	if err != nil {
-		fmt.Println("Ожидаемая ошибка:", err)
-	}
-
-	// === Сценарий 4 ===
-	fmt.Println("\n4. Успешный возврат книги")
-	err = myLibrary.ReturnBook(book1.ID)
-	if err != nil {
-		fmt.Println("Ошибка возврата:", err)
-	} else {
-		fmt.Println("Книга успешно возвращена.")
-	}
-	fmt.Println("Статус книги:", book1)
-
-	fmt.Println("\n5. Попытка вернуть книгу, которая уже в библиотеке")
-	err = myLibrary.ReturnBook(book1.ID)
-	if err != nil {
-		fmt.Println("Ожидаемая ошибка:", err)
-	}
-
-	fmt.Println("\n__ Уведомления __")
+	fmt.Println("Уведомления:")
 	emailNotifier := notifications.EmailNotifier{EmailAddress: "student@example.com"}
 	smsNotifier := notifications.SMSNotifier{PhoneNumber: "+79991234567"}
 
 	notifiers := []notifications.Notifier{emailNotifier, smsNotifier}
 	for _, n := range notifiers {
 		n.Notify("Ваша книга просрочена!")
-	}
-
-	fmt.Println("\n__ Все книги в библиотеке __")
-	for _, b := range myLibrary.GetAllBooks() {
-		fmt.Println(b)
 	}
 }
