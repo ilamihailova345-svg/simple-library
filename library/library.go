@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"library-app/domain"
-	"library-app/storage"
 )
 
 type Library struct {
@@ -14,7 +13,7 @@ type Library struct {
 	lastReaderID int
 }
 
-// New создаёт новую пустую библиотеку.
+//  создаёт новую пустую библиотеку
 func New() *Library {
 	return &Library{
 		Books:   []*domain.Book{},
@@ -22,7 +21,7 @@ func New() *Library {
 	}
 }
 
-// добавляет книгу
+// добавляет книгу. Ошибка, если дубликат
 func (lib *Library) AddBook(title, author string, year int) (*domain.Book, error) {
 	for _, b := range lib.Books {
 		if b.Title == title && b.Author == author {
@@ -40,6 +39,7 @@ func (lib *Library) AddBook(title, author string, year int) (*domain.Book, error
 	return book, nil
 }
 
+//  добавляет читателя
 func (lib *Library) AddReader(firstName, lastName string) *domain.Reader {
 	lib.lastReaderID++
 	reader := &domain.Reader{
@@ -52,6 +52,7 @@ func (lib *Library) AddReader(firstName, lastName string) *domain.Reader {
 	return reader
 }
 
+//  книгу по ID
 func (lib *Library) FindBookByID(id int) (*domain.Book, error) {
 	for _, b := range lib.Books {
 		if b.ID == id {
@@ -61,6 +62,7 @@ func (lib *Library) FindBookByID(id int) (*domain.Book, error) {
 	return nil, fmt.Errorf("книга с ID %d не найдена", id)
 }
 
+//  читателя по ID
 func (lib *Library) FindReaderByID(id int) (*domain.Reader, error) {
 	for _, r := range lib.Readers {
 		if r.ID == id {
@@ -70,6 +72,7 @@ func (lib *Library) FindReaderByID(id int) (*domain.Reader, error) {
 	return nil, fmt.Errorf("читатель с ID %d не найден", id)
 }
 
+//   книгу читателю по их ID
 func (lib *Library) IssueBookToReader(bookID, readerID int) error {
 	book, err := lib.FindBookByID(bookID)
 	if err != nil {
@@ -82,6 +85,7 @@ func (lib *Library) IssueBookToReader(bookID, readerID int) error {
 	return book.IssueBook(reader)
 }
 
+//  возвращает книгу в библиотеку по её ID
 func (lib *Library) ReturnBook(bookID int) error {
 	book, err := lib.FindBookByID(bookID)
 	if err != nil {
@@ -90,29 +94,32 @@ func (lib *Library) ReturnBook(bookID int) error {
 	return book.ReturnBook()
 }
 
+//  всех книг
 func (lib *Library) GetAllBooks() []*domain.Book {
 	return lib.Books
 }
 
-// сохраняет книги библиотеки в CSV
-func (lib *Library) SaveToCSV(filename string) error {
-	return storage.SaveBooksToCSV(lib.Books, filename)
-}
 
-// загружает книги из CSV, полностью заменяя текущий список
-func (lib *Library) LoadFromCSV(filename string) error {
-	books, err := storage.LoadBooksFromCSV(filename)
-	if err != nil {
-		return err
-	}
-	lib.Books = books
 
-	maxID := 0
-	for _, b := range books {
-		if b.ID > maxID {
-			maxID = b.ID
+
+
+// находит максимальные ID среди книг и читателей
+// и устанавливает внутренние счетчики библиотеки на эти значения
+// необходимо вызывать после загрузки данных из файла
+func (lib *Library) UpdateIDs() {
+	maxBookID := 0
+	for _, book := range lib.Books {
+		if book.ID > maxBookID {
+			maxBookID = book.ID
 		}
 	}
-	lib.lastBookID = maxID
-	return nil
+	lib.lastBookID = maxBookID
+
+	maxReaderID := 0
+	for _, reader := range lib.Readers {
+		if reader.ID > maxReaderID {
+			maxReaderID = reader.ID
+		}
+	}
+	lib.lastReaderID = maxReaderID
 }
