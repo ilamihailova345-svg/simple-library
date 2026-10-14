@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"library-app/cli"
+	"library-app/cmd/cli"
 	"library-app/library"
 	"library-app/storage"
 )
