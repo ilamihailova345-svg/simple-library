@@ -3,14 +3,15 @@ package domain
 import "fmt"
 
 type Book struct {
-	ID       int
-	Title    string
-	Author   string
-	Year     int
-	IsIssued bool
-	ReaderID *int
+	ID       int    `json:"id"`
+	Title    string `json:"title"`
+	Author   string `json:"author"`
+	Year     int    `json:"year"`
+	IsIssued bool   `json:"is_issued"`
+	ReaderID *int   `json:"reader_id"`
 }
 
+// возвращает описание книги с учётом её статуса.
 func (b Book) String() string {
 	status := "в библиотеке"
 	if b.IsIssued && b.ReaderID != nil {
@@ -19,6 +20,7 @@ func (b Book) String() string {
 	return fmt.Sprintf("\"%s\" (%s, %d), статус: %s", b.Title, b.Author, b.Year, status)
 }
 
+// выдаёт книгу читателю.
 func (b *Book) IssueBook(reader *Reader) error {
 	if b.IsIssued {
 		return fmt.Errorf("книга '%s' уже кому-то выдана", b.Title)
@@ -32,6 +34,7 @@ func (b *Book) IssueBook(reader *Reader) error {
 	return nil
 }
 
+// возвращает книгу в библиотеку.
 func (b *Book) ReturnBook() error {
 	if !b.IsIssued {
 		return fmt.Errorf("книга '%s' и так в библиотеке", b.Title)
@@ -42,12 +45,13 @@ func (b *Book) ReturnBook() error {
 }
 
 type Reader struct {
-	ID        int
-	FirstName string
-	LastName  string
-	IsActive  bool
+	ID        int    `json:"id"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	IsActive  bool   `json:"is_active"`
 }
 
+// возвращает описание читателя
 func (r Reader) String() string {
 	status := "активен"
 	if !r.IsActive {
@@ -56,10 +60,12 @@ func (r Reader) String() string {
 	return fmt.Sprintf("Читатель #%d: %s %s (%s)", r.ID, r.FirstName, r.LastName, status)
 }
 
+// делает читателя неактивным
 func (r *Reader) Deactivate() {
 	r.IsActive = false
 }
 
+// делает читателя активным
 func (r *Reader) Activate() {
 	r.IsActive = true
 }

@@ -1,0 +1,20 @@
+{
+  "books": [
+    {
+      "id": 1,
+      "title": "Герой нашего времени",
+      "author": "Михаил Лермонтов",
+      "year": 1840,
+      "is_issued": true,
+      "reader_id": 1
+    }
+  ],
+  "readers": [
+    {
+      "id": 1,
+      "first_name": "Вова",
+      "last_name": "Петрович",
+      "is_active": true
+    }
+  ]
+}
